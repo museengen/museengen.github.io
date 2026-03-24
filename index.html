@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MuseEnGen — Coupled Physiological State Estimation</title>
+<meta name="description" content="MuseEnGen: A hierarchical adaptive dual-loop architecture for continuous physiological state estimation with uncertainty quantification. Privacy-first edge computing. Stability · Resilience · Wear.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --paper: #faf8f5;
+    --paper-warm: #f5f1eb;
+    --accent: #8b4513;
+    --accent-light: #a0633a;
+    --muted: #6b6560;
+    --rule: #d4cec6;
+    --code-bg: #f0ece5;
+    --triad-s: #2d6a4f;
+    --triad-r: #1d4e89;
+    --triad-w: #9b2226;
+    --max-w: 720px;
+    --max-w-wide: 960px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    font-size: 17px;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.72;
+  }
+
+  /* ── NAV ── */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    padding: 0.8rem 2rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+
+  nav .wordmark {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500;
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  nav ul {
+    list-style: none;
+    display: flex;
+    gap: 1.8rem;
+  }
+
+  nav a {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: color 0.2s;
+  }
+
+  nav a:hover { color: var(--ink); }
+
+  /* ── HERO ── */
+  .hero {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 5rem 2rem 3.5rem;
+  }
+
+  .hero h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 0.4rem;
+    letter-spacing: -0.02em;
+  }
+
+  .hero .subtitle {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem;
+    color: var(--muted);
+    margin-bottom: 2rem;
+    font-weight: 400;
+  }
+
+  .hero .lede {
+    font-size: 1.15rem;
+    line-height: 1.8;
+    color: var(--ink);
+  }
+
+  .hero .lede em {
+    font-style: italic;
+    color: var(--accent);
+  }
+
+  /* ── SECTIONS ── */
+  section {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  section.wide {
+    max-width: var(--max-w-wide);
+  }
+
+  h2 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.3rem;
+    letter-spacing: -0.01em;
+  }
+
+  h2 .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.05em;
+  }
+
+  h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    margin-top: 1.8rem;
+    margin-bottom: 0.5rem;
+    color: var(--ink);
+  }
+
+  p { margin-bottom: 1rem; }
+
+  .rule {
+    border: none;
+    border-top: 1px solid var(--rule);
+    margin: 0;
+  }
+
+  /* ── TRIAD DISPLAY ── */
+  .triad-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  .triad-card {
+    padding: 1.5rem;
+    background: var(--paper-warm);
+    border-left: 3px solid;
+  }
+
+  .triad-card.stability { border-color: var(--triad-s); }
+  .triad-card.resilience { border-color: var(--triad-r); }
+  .triad-card.wear { border-color: var(--triad-w); }
+
+  .triad-card .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .triad-card.stability .label { color: var(--triad-s); }
+  .triad-card.resilience .label { color: var(--triad-r); }
+  .triad-card.wear .label { color: var(--triad-w); }
+
+  .triad-card p {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    margin-bottom: 0;
+    color: var(--ink);
+  }
+
+  /* ── ARCHITECTURE DIAGRAM ── */
+  .arch-figure {
+    max-width: var(--max-w-wide);
+    margin: 2rem auto;
+    padding: 0 2rem;
+  }
+
+  .arch-figure svg {
+    width: 100%;
+    height: auto;
+  }
+
+  .arch-figure figcaption {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem;
+    color: var(--muted);
+    margin-top: 0.6rem;
+    text-align: center;
+  }
+
+  /* ── THREE-LAYER TABLE ── */
+  .layer-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 1.5rem 0;
+    font-size: 0.9rem;
+  }
+
+  .layer-table th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: left;
+    padding: 0.6rem 0.8rem;
+    border-bottom: 2px solid var(--rule);
+  }
+
+  .layer-table td {
+    padding: 0.75rem 0.8rem;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+
+  .layer-table td:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    font-weight: 500;
+    white-space: nowrap;
+    color: var(--accent);
+  }
+
+  .layer-table td:nth-child(2) {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+
+  /* ── ROADMAP ── */
+  .roadmap {
+    position: relative;
+    margin: 2rem 0;
+  }
+
+  .phase {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    gap: 1.5rem;
+    padding: 1.5rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .phase:last-child { border-bottom: none; }
+
+  .phase-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--muted);
+  }
+
+  .phase-meta .phase-name {
+    font-weight: 500;
+    color: var(--ink);
+    display: block;
+    margin-bottom: 0.15rem;
+  }
+
+  .phase-meta .phase-current {
+    display: inline-block;
+    font-size: 0.65rem;
+    padding: 0.15rem 0.5rem;
+    background: var(--triad-s);
+    color: white;
+    border-radius: 2px;
+    margin-top: 0.3rem;
+    letter-spacing: 0.04em;
+  }
+
+  .phase-body {
+    font-size: 0.92rem;
+    line-height: 1.65;
+  }
+
+  .phase-body p { margin-bottom: 0; }
+
+  /* ── CLAIMS BOUNDARY ── */
+  .claims-box {
+    background: var(--paper-warm);
+    border: 1px solid var(--rule);
+    padding: 1.5rem 2rem;
+    margin: 2rem 0;
+    font-size: 0.9rem;
+    line-height: 1.7;
+  }
+
+  .claims-box .claims-header {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.8rem;
+  }
+
+  .claims-does {
+    color: var(--triad-s);
+    font-weight: 600;
+  }
+
+  .claims-does-not {
+    color: var(--triad-w);
+    font-weight: 600;
+  }
+
+  /* ── METHODOLOGY ── */
+  .ensemble-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+
+  .ensemble-card {
+    padding: 1.2rem;
+    background: var(--paper-warm);
+    font-size: 0.88rem;
+    line-height: 1.55;
+  }
+
+  .ensemble-card .role-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    margin-bottom: 0.4rem;
+  }
+
+  .ensemble-card p { margin-bottom: 0; }
+
+  /* ── PUBLICATIONS ── */
+  .pub-list {
+    margin: 1.5rem 0;
+  }
+
+  .pub-entry {
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .pub-entry:last-child { border-bottom: none; }
+
+  .pub-title {
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+  }
+
+  .pub-meta {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .pub-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem;
+    padding: 0.1rem 0.4rem;
+    border: 1px solid var(--rule);
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    margin-left: 0.3rem;
+    vertical-align: middle;
+  }
+
+  .pub-desc {
+    font-size: 0.88rem;
+    margin-top: 0.45rem;
+    line-height: 1.55;
+  }
+
+  .pub-dl {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: var(--accent);
+    text-decoration: none;
+    letter-spacing: 0.03em;
+    margin-left: 0.6rem;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+
+  .pub-dl:hover { border-bottom-color: var(--accent); }
+
+  /* ── FOUNDER ── */
+  .founder-section {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .founder-section .credentials {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.3rem;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    max-width: var(--max-w);
+    margin: 0 auto;
+    padding: 3rem 2rem;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  footer .left {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+
+  footer .right {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+  }
+
+  footer a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s;
+  }
+
+  footer a:hover {
+    border-bottom-color: var(--accent);
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 720px) {
+    html { font-size: 16px; }
+    .hero { padding: 3rem 1.5rem 2.5rem; }
+    .hero h1 { font-size: 1.8rem; }
+    section { padding: 2rem 1.5rem; }
+    .triad-row { grid-template-columns: 1fr; gap: 1rem; }
+    .ensemble-grid { grid-template-columns: 1fr; }
+    .phase { grid-template-columns: 1fr; gap: 0.5rem; }
+    nav ul { gap: 1rem; }
+    nav { padding: 0.8rem 1.5rem; }
+    footer { flex-direction: column; }
+  }
+
+  @media (max-width: 480px) {
+    nav ul { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="wordmark">MuseEnGen</a>
+  <ul>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#methodology">Methodology</a></li>
+    <li><a href="#roadmap">Roadmap</a></li>
+    <li><a href="#documents">Documents</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════════════ HERO ═══════════════════════════════════════ -->
+<header class="hero">
+  <h1>MuseEnGen</h1>
+  <p class="subtitle">Coupled Physiological State Estimation with Uncertainty Quantification</p>
+  <p class="lede">
+    MuseEnGen is a hierarchical adaptive dual-loop architecture for continuous physiological state estimation.
+    The system maintains a real-time, uncertainty-aware model of individual physiology across coupled subsystems,
+    using Unscented Kalman Filter banks on edge hardware and a slow-loop reasoning layer grounded in formal ontology.
+    <em>Designed first for clinically frail users — where the safety case is most acute — and architected
+    and engineered to be inexpensive enough that nearly anyone who wants one can have their own.</em>
+  </p>
+</header>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ HEALTH TRIAD ═══════════════════════════════ -->
+<section id="triad">
+  <h2><span class="section-num">01</span>The Health Triad</h2>
+  <p>
+    The user-facing abstraction is three coupled signals — Stability, Resilience, and Wear — dynamically
+    linked through an internal activation signal. This formulation captures something that threshold-based
+    monitoring cannot: a person can appear stable while compensatory effort rises, reserve depletes, and
+    cumulative strain accumulates underneath. The system explicitly models compensation as meaningful physiological information.
+  </p>
+
+  <div class="triad-row">
+    <div class="triad-card stability">
+      <div class="label">Stability</div>
+      <p>How well the body is maintaining its current regulatory set points. Estimated from innovation sequences across the UKF filter bank — persistent deviations between predicted and observed states indicate regulatory strain before overt symptoms appear.</p>
+    </div>
+    <div class="triad-card resilience">
+      <div class="label">Resilience</div>
+      <p>The remaining capacity to absorb perturbation. Modeled via a nonlinear sigmoid that captures the cliff-edge fragility characteristic of vulnerable physiology: small additional stressors produce disproportionate decline when reserve is low. The system becomes more conservative as reserve contracts.</p>
+    </div>
+    <div class="triad-card wear">
+      <div class="label">Wear</div>
+      <p>Cumulative burden from sustained high activation and incomplete recovery. Tracks the integral of activation over time, gated by recovery quality. Wear accumulates when stress is persistent and recovery windows are insufficient — the biological cost of running hot.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ ARCHITECTURE ════════════════════════════════ -->
+<section id="architecture">
+  <h2><span class="section-num">02</span>Architecture</h2>
+  <p>
+    The system separates into two complementary loops. <strong>PA</strong> (the fast loop) runs real-time
+    state estimation on edge hardware — a bank of Unscented Kalman Filters estimating latent physiological
+    states across four Tier 1 subsystems: Cardiovascular, Autonomic Nervous System, Fluid/Volume, and
+    Respiratory. <strong>MA</strong> (the slow loop) performs longitudinal adaptation and causal reasoning,
+    personalizing the edge model through bounded prior updates and generating uncertainty-quantified
+    hypotheses about physiological trajectory.
+  </p>
+  <p>
+    The architecture enforces a three-layer control hierarchy with strict latency and authority separation:
+  </p>
+
+  <table class="layer-table">
+    <thead>
+      <tr>
+        <th>Layer</th>
+        <th>Latency</th>
+        <th>Function</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>L1 — MCU</td>
+        <td>&lt; 2 ms</td>
+        <td>Hard real-time deterministic safety. Threshold-based. Cannot be overridden by higher-level software. Handles reflex-layer responses: fall detection, hypoxia alarm, kinematic stabilization.</td>
+      </tr>
+      <tr>
+        <td>L2 — Edge</td>
+        <td>&lt; 20 ms @ 1 Hz</td>
+        <td>UKF filter bank across four Tier 1 physiological subsystems. Health Triad computation. Short-horizon prediction with covariance propagation. All estimation runs on-device.</td>
+      </tr>
+      <tr>
+        <td>L3 — Cloud</td>
+        <td>Hours–months</td>
+        <td>Longitudinal physiological modeling. Personalization parameter updates via bounded prior updates with rate limiting, shadow-mode validation, and automatic rollback. Ontology-grounded causal reasoning and hypothesis generation.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Design invariants</h3>
+  <p>
+    The separation is not cosmetic. The MCU safety loop is deterministic and independent — it cannot be delayed or overridden by the Jetson or cloud layers. Raw biometric waveforms never leave the edge device; upstream communication is limited to aggregated Health Triad summaries with uncertainty bounds, transmitted on minimum windowed intervals. When the model's uncertainty increases, the system's autonomy contracts — it does less, not more. Every MA parameter update flows through a rate-limited safety interface with hard bounds.
+  </p>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ METHODOLOGY ═════════════════════════════════ -->
+<section id="methodology">
+  <h2><span class="section-num">03</span>Development Methodology</h2>
+  <p>
+    MuseEnGen is developed using a structured multi-model AI ensemble workflow — a novel engineering
+    methodology that treats frontier AI models as specialized co-architects with strict role boundaries,
+    governed by structural invariants rather than prose guidelines. The pattern has been validated across
+    35+ architectural decisions, 17 safety case hazards, and a 90+ file specification suite.
+  </p>
+  <p>
+    The core insight: different AI models fail in fundamentally different ways. A model trained to find
+    mathematical errors may miss a biologically implausible parameter. A model that excels at engineering
+    feasibility may not notice a formal logic gap. Heterogeneous model ensembles catch error classes that
+    no single model — human or AI — catches alone.
+  </p>
+
+  <div class="ensemble-grid">
+    <div class="ensemble-card">
+      <div class="role-name">Architecture Synthesis</div>
+      <p>Cross-document consistency, specification synthesis, architectural reasoning, completeness audits. Sees the whole project via knowledge search. Cannot execute on the repository.</p>
+    </div>
+    <div class="ensemble-card">
+      <div class="role-name">Mathematical Rigor</div>
+      <p>Equation auditing, formal specification, BFO ontology correctness, interface contract verification. Multi-round review with the architect.</p>
+    </div>
+    <div class="ensemble-card">
+      <div class="role-name">Biological Validation</div>
+      <p>Physiological plausibility, parameter range verification, clinical scenario realism, scientific accuracy against current literature.</p>
+    </div>
+    <div class="ensemble-card">
+      <div class="role-name">Engineering Feasibility</div>
+      <p>Hardware implementability, compute budget verification, RF/wireless analysis, thermal envelope compliance, deployment realism.</p>
+    </div>
+  </div>
+
+  <p>
+    A human decision-maker retains full authority over all merges, invariants, and design choices. The
+    workflow is governed by single-source-of-truth hierarchies, architectural decision records with orphan
+    checks, version currency gates, and role-specific preambles that constrain each model's review scope.
+    The methodology is described in detail in the white paper below and is offered as a transferable pattern
+    for any engineering team.
+  </p>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ ROADMAP ═════════════════════════════════════ -->
+<section id="roadmap">
+  <h2><span class="section-num">04</span>Roadmap</h2>
+  <p>
+    The project is staged deliberately. Each phase earns the right to the next through validated evidence, not schedule pressure. The governance principle is conservative: no scope expansion without passing the current phase gate.
+  </p>
+
+  <div class="roadmap">
+    <div class="phase">
+      <div class="phase-meta">
+        <span class="phase-name">Guardian</span>
+        2026–2028
+        <span class="phase-current">Current</span>
+      </div>
+      <div class="phase-body">
+        <p>Validated safety loop on edge hardware. All interventions require clinician authorization. Tier 1 UKF filter bank validated. Health Triad computation live. Environmental and physical stabilization interventions. Constrained to clinically frail users in supervised care settings.</p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-meta">
+        <span class="phase-name">Physician</span>
+        2029–2033
+      </div>
+      <div class="phase-body">
+        <p>Bounded protocol autonomy within physician-defined envelopes. Autonomous intervention protocols for validated failure modes. Tier 2 subsystems (endocrine, metabolic, immune). System acts within validated envelopes; physician oversight continues.</p>
+      </div>
+    </div>
+
+    <div class="phase">
+      <div class="phase-meta">
+        <span class="phase-name">Longitudinal</span>
+        2034+
+      </div>
+      <div class="phase-body">
+        <p>Adaptive structural modeling. Closed-loop damage accumulation tracking using the SENS categorical framework as structural guide. Fully personalized biological regulator with user sovereignty.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ CLAIMS ══════════════════════════════════════ -->
+<section id="claims">
+  <h2><span class="section-num">05</span>Claims Boundary</h2>
+  <p>
+    The project maintains an explicit and public claims boundary. This is not a legal disclaimer — it is an architectural commitment enforced across all specifications, external communications, and user-facing outputs.
+  </p>
+
+  <div class="claims-box">
+    <div class="claims-header">Public Claims Discipline</div>
+    <p>
+      MuseEnGen is designed to <span class="claims-does">monitor, estimate, suggest, and support</span>.
+      It does <span class="claims-does-not">not</span> claim to <span class="claims-does-not">diagnose, treat, cure, or provide medical advice</span>.
+    </p>
+    <p style="margin-bottom:0.5rem;">
+      Every hypothesis output is accompanied by uncertainty quantification. No point estimates without confidence bounds in user-facing output. MA reasoning outputs use language such as "physiological deterioration likely" — never "infection detected." Suggested actions are framed as "suggests consideration of [intervention class] for clinician review" — never specific therapeutic recommendations.
+    </p>
+    <p style="margin-bottom:0;">
+      Validation status is disclosed honestly: what has been validated is stated; what has not been validated is not hidden. Known gaps are part of the public record.
+    </p>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ PRIVACY ═════════════════════════════════════ -->
+<section id="privacy">
+  <h2><span class="section-num">06</span>Privacy Architecture</h2>
+  <p>
+    Privacy in MuseEnGen is not a policy layer — it is a hardware-enforced architectural invariant. Raw biometric waveforms are processed on-device and never leave the edge hardware. What can move upstream are aggregated Health Triad summaries with covariance bounds, transmitted on minimum windowed intervals rather than continuous per-sample streaming. The edge device is the trust boundary.
+  </p>
+  <p>
+    This constraint is load-bearing: the system's safety case depends on it, the user's data sovereignty depends on it, and the regulatory posture depends on it. It is not a feature that can be toggled off for convenience.
+  </p>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ DOCUMENTS ════════════════════════════════════ -->
+<section id="documents">
+  <h2><span class="section-num">07</span>Working Documents</h2>
+  <p>
+    These are project working documents — not peer-reviewed publications. They describe
+    the methodology, architecture, and safety reasoning as they currently stand. They are
+    shared publicly in the interest of transparency and because the methodology work may
+    be independently useful to other engineering teams.
+  </p>
+
+  <div class="pub-list">
+    <div class="pub-entry">
+      <div class="pub-title">Spec-Driven Development with Heterogeneous AI Ensembles</div>
+      <div class="pub-meta">
+        Jeff Hall · March 2026 · White paper
+        <span class="pub-tag">Methodology</span>
+        <!-- <a href="/papers/ensemble-workflow-v1.pdf" class="pub-dl">PDF</a> -->
+      </div>
+      <p class="pub-desc">
+        A workflow pattern for engineering teams using multiple AI models as specialized
+        co-architects. Describes role-specific preambles, single-source-of-truth hierarchies,
+        ADR orphan checks, version currency gates, and structured ensemble review. Validated
+        across 24 architectural decisions and a 47-file project knowledge base. Domain-independent
+        — applicable to any specification-intensive engineering project. This is a methodological
+        contribution, not a claim of clinical validation for the physiological system.
+      </p>
+    </div>
+
+    <div class="pub-entry">
+      <div class="pub-title">AI-Augmented Engineering Workflow Pattern</div>
+      <div class="pub-meta">
+        Jeff Hall · March 2026 · One-page reference
+        <span class="pub-tag">Methodology</span>
+        <!-- <a href="/papers/workflow-pattern-v1.pdf" class="pub-dl">PDF</a> -->
+      </div>
+      <p class="pub-desc">
+        Condensed operational reference for the ensemble workflow. Four roles (Decider,
+        Architect, Executor, Reviewers), the workflow loop, and six governing principles.
+        Intended as a quick-start for teams adopting the pattern.
+      </p>
+    </div>
+
+    <div class="pub-entry">
+      <div class="pub-title">Uncertainty Obligation Invariant Family and RSI Safety</div>
+      <div class="pub-meta">
+        Jeff Hall · 2026 · Draft
+        <span class="pub-tag">Safety</span>
+        <span class="pub-tag">Forthcoming</span>
+      </div>
+      <p class="pub-desc">
+        Formalizes an invariant family requiring that uncertainty quantification obligations
+        propagate through any recursive self-improvement pathway. Currently in internal
+        ensemble review; will be posted here after ratification.
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ FOUNDER ═════════════════════════════════════ -->
+<section id="founder">
+  <h2><span class="section-num">08</span>About</h2>
+  <div class="founder-section">
+    <div>
+      <p>
+        MuseEnGen is founded and led by <strong>Jeff Hall</strong>. The project is explicitly non-commercial:
+        the mission is a personalized MA&nbsp;&amp;&nbsp;PA instance, engineered to be
+    inexpensive enough that nearly anyone who wants one can have their own.
+        Version&nbsp;1 earns the right to Version&nbsp;2.
+      </p>
+      <p class="credentials">
+        Electrical Engineering and Physics, University of Michigan. 30+ years across automotive systems,
+        Department of Defense programs, and startup environments including work with a Founders Fund–backed company.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ FOOTER ══════════════════════════════════════ -->
+<footer id="contact">
+  <div class="left">
+    MuseEnGen · 2026<br>
+    Ann Arbor, Michigan
+  </div>
+  <div class="right">
+    <a href="mailto:jeff@museengen.com">jeff@museengen.com</a>&ensp;·&ensp;
+    <a href="https://github.com/museengen">GitHub</a>
+  </div>
+</footer>
+
+</body>
+</html>
