@@ -521,23 +521,23 @@
   <h2><span class="section-num">01</span>The Health Triad</h2>
   <p>
     The user-facing abstraction is three coupled signals — Stability, Resilience, and Wear — dynamically
-    linked through an internal activation signal. This formulation captures something that threshold-based
-    monitoring cannot: a person can appear stable while compensatory effort rises, reserve depletes, and
-    cumulative strain accumulates underneath. The system explicitly models compensation as meaningful physiological information.
+    linked through an internal allostatic activation signal. This formulation captures something that threshold-based
+    monitoring cannot: a person can appear stable while compensatory effort rises, homeostatic reserve depletes, and
+    allostatic load accumulates underneath. The system explicitly models compensation as meaningful physiological information.
   </p>
 
   <div class="triad-row">
     <div class="triad-card stability">
       <div class="label">Stability</div>
-      <p>How well the body is maintaining its current regulatory set points. Estimated from innovation sequences across the UKF filter bank — persistent deviations between predicted and observed states indicate regulatory strain before overt symptoms appear.</p>
+      <p>Homeostatic regulation quality — how well the body is maintaining its current regulatory set points. Estimated from innovation sequences across the UKF filter bank — persistent deviations between predicted and observed states indicate regulatory strain before overt symptoms appear.</p>
     </div>
     <div class="triad-card resilience">
       <div class="label">Resilience</div>
-      <p>The remaining capacity to absorb perturbation. Modeled via a nonlinear sigmoid that captures the cliff-edge fragility characteristic of vulnerable physiology: small additional stressors produce disproportionate decline when reserve is low. The system becomes more conservative as reserve contracts.</p>
+      <p>Homeostatic reserve — the remaining capacity to absorb perturbation. Modeled via a nonlinear sigmoid that captures the cliff-edge fragility characteristic of vulnerable physiology: small additional stressors produce disproportionate decline when reserve is low. The system becomes more conservative as reserve contracts.</p>
     </div>
     <div class="triad-card wear">
       <div class="label">Wear</div>
-      <p>Cumulative burden from sustained high activation and incomplete recovery. Tracks the integral of activation over time, gated by recovery quality. Wear accumulates when stress is persistent and recovery windows are insufficient — the biological cost of running hot.</p>
+      <p>Allostatic load — cumulative burden from sustained activation and incomplete recovery. Tracks the integral of allostatic activation over time, gated by recovery quality. Wear accumulates when stress is persistent and recovery windows are insufficient — the biological cost of chronic compensatory effort.</p>
     </div>
   </div>
 </section>
