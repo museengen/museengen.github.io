@@ -1,59 +1,31 @@
-# Bundle 001 — Locked MCU Parameter Rejection
+# museengen.github.io
 
-## Scenario
+Public website for [MuseEnGen](https://museengen.com) — first-principles physiological modeling.
 
-MA_Cloud proposes to lower `mcu_fall_trigger_threshold` from 0.75 → 0.70.
+## What this site contains
 
-This parameter has `max_step_fraction_per_update: 0.0` in the parameter
-registry, which disables all remote mutation. The PSI must reject at
-**State 1 (Allowlist)** with reason code `PARAMETER_LOCKED`.
+A single-page academic-style overview of the MuseEnGen project, including:
 
-## Why this is the first bundle
+- The Cardio model: a 29-state coupled ODE validated on three independent cohorts (~40,000 adults)
+- Wearable monitoring validation across five clinical populations
+- The Health Triad abstraction (Stability, Resilience, Wear)
+- System architecture (PA fast loop, MA slow loop, three-layer control hierarchy)
+- AI ensemble development methodology
+- Claims boundary and privacy architecture
+- News and working document index
 
-This is the simplest, most unambiguous rejection in the entire PSI
-state machine. It requires no shadow window, no epistemic gate, no
-two-key signals — just the allowlist check. If this bundle fails, the
-most fundamental PSI gate is broken.
+## Deployment
 
-Establishing this bundle first proves the replay runner infrastructure
-is working before adding more complex scenarios.
+Static site hosted via GitHub Pages. Domain: `museengen.com` (configured via CNAME).
 
-## Safety gate tested
+## Claims boundary
 
-**State 1 — Allowlist gate: `max_step_fraction_per_update == 0.0` lock**
+All content on this site complies with the MuseEnGen Outreach Interface Contract:
 
-MCU safety parameters are locked against remote mutation by default.
-The only way to change them is via explicit user unlock + clinical
-review workflow (for `mcu_hypoxia_hard_threshold_spo2`) or physical
-access. This lock must be enforced before any other gate is evaluated —
-high-quality evidence, valid two-key signals, and stable allostatic
-baseline must not be able to unlock a locked parameter.
+- The system **monitors, estimates, suggests, and supports**
+- It does **not** diagnose, treat, cure, or provide medical advice
+- Validation status is disclosed honestly — what has been validated is stated; what has not is not hidden
 
-## Expected outcome
+## Contact
 
-```
-decision:         REJECTED
-rejection_stage:  ALLOWLIST_FAIL
-reason_codes:     [..., "PARAMETER_LOCKED"]
-```
-
-## What a failure of this bundle means
-
-If this bundle fails, one of the following has happened:
-
-1. `max_step_fraction_per_update == 0.0` is no longer being checked,
-   or is being checked after other gates that might short-circuit it.
-2. The allowlist check has been moved or removed.
-3. The parameter registry YAML is not being loaded correctly.
-
-Any of these represents a **critical safety regression**. The MCU
-safety path must not be alterable via remote update.
-
-## Related parameters
-
-Both MCU parameters are locked (`max_step_fraction: 0.0`):
-- `mcu_fall_trigger_threshold` (this bundle)
-- `mcu_hypoxia_hard_threshold_spo2`
-
-A corresponding bundle for `mcu_hypoxia_hard_threshold_spo2` should
-be added as bundle 002.
+Jeff Hall · [jeff@museengen.com](mailto:jeff@museengen.com)
