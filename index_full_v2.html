@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MuseEnGen — First-Principles Physiological Modeling</title>
+<meta name="description" content="MuseEnGen: Coupled ODE modeling of physiological degradation. The Cardio model outperforms Framingham across every major mortality endpoint on three independent cohorts without outcome fitting. Genetically validated. Open methodology.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;0,8..60,700;1,8..60,400&family=JetBrains+Mono:wght@400;500&family=DM+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a1a1a;
+    --paper: #faf8f5;
+    --paper-warm: #f5f1eb;
+    --accent: #8b4513;
+    --accent-light: #a0633a;
+    --muted: #6b6560;
+    --rule: #d4cec6;
+    --code-bg: #f0ece5;
+    --triad-s: #2d6a4f;
+    --triad-r: #1d4e89;
+    --triad-w: #9b2226;
+    --max-w: 720px;
+    --max-w-wide: 960px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    font-size: 17px;
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+    color: var(--ink);
+    background: var(--paper);
+    line-height: 1.72;
+  }
+
+  nav {
+    position: sticky; top: 0; z-index: 100;
+    background: var(--paper);
+    border-bottom: 1px solid var(--rule);
+    padding: 0.8rem 2rem;
+    display: flex; align-items: center; justify-content: space-between;
+    backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+  }
+
+  nav .wordmark {
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 500; font-size: 0.85rem;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--ink); text-decoration: none;
+  }
+
+  nav ul { list-style: none; display: flex; gap: 1.8rem; }
+
+  nav a {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem; font-weight: 500;
+    color: var(--muted); text-decoration: none;
+    letter-spacing: 0.02em; transition: color 0.2s;
+  }
+
+  nav a:hover { color: var(--ink); }
+
+  .hero {
+    max-width: var(--max-w);
+    margin: 0 auto; padding: 5rem 2rem 3.5rem;
+  }
+
+  .hero h1 {
+    font-size: 2.4rem; font-weight: 700;
+    line-height: 1.2; margin-bottom: 0.4rem;
+    letter-spacing: -0.02em;
+  }
+
+  .hero .subtitle {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 1rem; color: var(--muted);
+    margin-bottom: 2rem; font-weight: 400;
+  }
+
+  .hero .lede {
+    font-size: 1.15rem; line-height: 1.8; color: var(--ink);
+  }
+
+  .hero .lede em {
+    font-style: italic; color: var(--accent);
+  }
+
+  section {
+    max-width: var(--max-w);
+    margin: 0 auto; padding: 3rem 2rem;
+  }
+
+  section.wide { max-width: var(--max-w-wide); }
+
+  h2 {
+    font-size: 1.5rem; font-weight: 600;
+    margin-bottom: 0.3rem; letter-spacing: -0.01em;
+  }
+
+  h2 .section-num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem; color: var(--muted);
+    display: block; margin-bottom: 0.25rem;
+    letter-spacing: 0.05em;
+  }
+
+  h3 {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem; font-weight: 600;
+    margin-top: 1.8rem; margin-bottom: 0.5rem;
+    color: var(--ink);
+  }
+
+  p { margin-bottom: 1rem; }
+  .rule { border: none; border-top: 1px solid var(--rule); margin: 0; }
+
+  .triad-row {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem; margin: 2rem 0;
+  }
+
+  .triad-card {
+    padding: 1.5rem; background: var(--paper-warm);
+    border-left: 3px solid;
+  }
+
+  .triad-card.stability { border-color: var(--triad-s); }
+  .triad-card.resilience { border-color: var(--triad-r); }
+  .triad-card.wear { border-color: var(--triad-w); }
+
+  .triad-card .label {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+
+  .triad-card.stability .label { color: var(--triad-s); }
+  .triad-card.resilience .label { color: var(--triad-r); }
+  .triad-card.wear .label { color: var(--triad-w); }
+
+  .triad-card p {
+    font-size: 0.92rem; line-height: 1.6;
+    margin-bottom: 0; color: var(--ink);
+  }
+
+  .layer-table {
+    width: 100%; border-collapse: collapse;
+    margin: 1.5rem 0; font-size: 0.9rem;
+  }
+
+  .layer-table th {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--muted); text-align: left;
+    padding: 0.6rem 0.8rem; border-bottom: 2px solid var(--rule);
+  }
+
+  .layer-table td {
+    padding: 0.75rem 0.8rem; border-bottom: 1px solid var(--rule);
+    vertical-align: top; line-height: 1.5;
+  }
+
+  .layer-table td:first-child {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem; font-weight: 500;
+    white-space: nowrap; color: var(--accent);
+  }
+
+  .layer-table td:nth-child(2) {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.8rem; color: var(--muted); white-space: nowrap;
+  }
+
+  .layer-table .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem; font-weight: 500;
+    color: var(--triad-s); text-align: center;
+  }
+
+  .layer-table .num-muted {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.82rem; color: var(--muted); text-align: center;
+  }
+
+  .roadmap { position: relative; margin: 2rem 0; }
+
+  .phase {
+    display: grid; grid-template-columns: 140px 1fr;
+    gap: 1.5rem; padding: 1.5rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .phase:last-child { border-bottom: none; }
+
+  .phase-meta {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.78rem; color: var(--muted);
+  }
+
+  .phase-meta .phase-name { font-weight: 500; color: var(--ink); display: block; margin-bottom: 0.15rem; }
+
+  .phase-meta .phase-current {
+    display: inline-block; font-size: 0.65rem;
+    padding: 0.15rem 0.5rem; background: var(--triad-s);
+    color: white; border-radius: 2px;
+    margin-top: 0.3rem; letter-spacing: 0.04em;
+  }
+
+  .phase-body { font-size: 0.92rem; line-height: 1.65; }
+  .phase-body p { margin-bottom: 0; }
+
+  .claims-box {
+    background: var(--paper-warm); border: 1px solid var(--rule);
+    padding: 1.5rem 2rem; margin: 2rem 0;
+    font-size: 0.9rem; line-height: 1.7;
+  }
+
+  .claims-box .claims-header {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.8rem;
+  }
+
+  .claims-does { color: var(--triad-s); font-weight: 600; }
+  .claims-does-not { color: var(--triad-w); font-weight: 600; }
+
+  .ensemble-grid {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 1rem; margin: 1.5rem 0;
+  }
+
+  .ensemble-card {
+    padding: 1.2rem; background: var(--paper-warm);
+    font-size: 0.88rem; line-height: 1.55;
+  }
+
+  .ensemble-card .role-name {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.05em; color: var(--accent);
+    margin-bottom: 0.4rem;
+  }
+
+  .ensemble-card p { margin-bottom: 0; }
+
+  .pub-list { margin: 1.5rem 0; }
+
+  .pub-entry { padding: 1rem 0; border-bottom: 1px solid var(--rule); }
+  .pub-entry:last-child { border-bottom: none; }
+  .pub-title { font-weight: 600; margin-bottom: 0.2rem; }
+
+  .pub-meta {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem; color: var(--muted);
+  }
+
+  .pub-tag {
+    display: inline-block;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.62rem; padding: 0.1rem 0.4rem;
+    border: 1px solid var(--rule); color: var(--muted);
+    letter-spacing: 0.04em; text-transform: uppercase;
+    margin-left: 0.3rem; vertical-align: middle;
+  }
+
+  .pub-desc {
+    font-size: 0.88rem; margin-top: 0.45rem; line-height: 1.55;
+  }
+
+  .founder-section { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+
+  .founder-section .credentials {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem; color: var(--muted); margin-top: 0.3rem;
+  }
+
+  footer {
+    max-width: var(--max-w); margin: 0 auto; padding: 3rem 2rem;
+    border-top: 1px solid var(--rule);
+    display: flex; justify-content: space-between;
+    align-items: baseline; flex-wrap: wrap; gap: 1rem;
+  }
+
+  footer .left {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.75rem; color: var(--muted);
+  }
+
+  footer .right { font-family: 'DM Sans', sans-serif; font-size: 0.82rem; }
+
+  footer a {
+    color: var(--accent); text-decoration: none;
+    border-bottom: 1px solid transparent; transition: border-color 0.2s;
+  }
+
+  footer a:hover { border-bottom-color: var(--accent); }
+
+  /* ── NEWS ── */
+  .news-entry {
+    padding: 1.2rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .news-entry:last-child { border-bottom: none; }
+  .news-date {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.72rem; color: var(--muted);
+    letter-spacing: 0.04em; margin-bottom: 0.3rem;
+  }
+  .news-headline {
+    font-weight: 600; margin-bottom: 0.3rem;
+  }
+  .news-body {
+    font-size: 0.9rem; line-height: 1.6;
+    margin-bottom: 0;
+  }
+
+  /* ── HIGHLIGHT BOX ── */
+  .highlight-box {
+    background: var(--paper-warm); border-left: 3px solid var(--accent);
+    padding: 1.2rem 1.5rem; margin: 1.5rem 0;
+    font-size: 0.92rem; line-height: 1.65;
+  }
+
+  @media (max-width: 720px) {
+    html { font-size: 16px; }
+    .hero { padding: 3rem 1.5rem 2.5rem; }
+    .hero h1 { font-size: 1.8rem; }
+    section { padding: 2rem 1.5rem; }
+    .triad-row { grid-template-columns: 1fr; gap: 1rem; }
+    .ensemble-grid { grid-template-columns: 1fr; }
+    .phase { grid-template-columns: 1fr; gap: 0.5rem; }
+    nav ul { gap: 1rem; }
+    nav { padding: 0.8rem 1.5rem; }
+    footer { flex-direction: column; }
+  }
+
+  @media (max-width: 480px) {
+    nav ul { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="wordmark">MuseEnGen</a>
+  <ul>
+    <li><a href="#results">Results</a></li>
+    <li><a href="#architecture">Architecture</a></li>
+    <li><a href="#methodology">Methodology</a></li>
+    <li><a href="#documents">Documents</a></li>
+    <li><a href="#news">News</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- ═══════════════════════════════════════ HERO ═══════════════════════════════════════ -->
+<header class="hero">
+  <h1>MuseEnGen</h1>
+  <p class="subtitle">First-Principles Physiological Modeling &middot; Mechanism Over Correlation</p>
+  <p class="lede">
+    MuseEnGen develops coupled ODE models of physiological degradation, parameterized entirely
+    from published physiology and validated against population-scale data. The first instantiation &mdash;
+    the Cardio model &mdash; is a 29-state cardiovascular ODE that outperforms the Framingham Risk Score
+    across every major mortality endpoint on three independent cohorts totaling ~40,000 adults, without
+    any parameter fitted to outcome data.
+    <em>The method is general. Cardiovascular is where we proved it first.</em>
+  </p>
+</header>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ RESULTS ════════════════════════════════════ -->
+<section id="results">
+  <h2><span class="section-num">01</span>The Cardio Model: Results</h2>
+  <p>
+    The Cardio model simulates five interacting physiological subsystems &mdash; arterial stiffening,
+    baroreflex decline, atherosclerotic plaque accumulation, cardiac reserve depletion, and renal
+    compensation &mdash; evolving over a 10-year window from initial conditions taken from a standard
+    blood panel. Every parameter comes from published physiological literature. No parameter was
+    fitted to mortality data. It encodes mechanism, not statistical correlation.
+  </p>
+
+  <h3>Multi-endpoint discrimination across three independent cohorts</h3>
+
+  <table class="layer-table">
+    <thead>
+      <tr>
+        <th>Endpoint</th>
+        <th>NHANES III<br>(1988&ndash;94)</th>
+        <th>Cont. NHANES<br>(1999&ndash;2010)</th>
+        <th>HRS<br>(50+, imputed)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>All-cause mortality</td>
+        <td class="num">0.820</td>
+        <td class="num">0.810</td>
+        <td class="num">0.777</td>
+      </tr>
+      <tr>
+        <td>Heart disease</td>
+        <td class="num">0.834</td>
+        <td class="num">0.802</td>
+        <td class="num">0.664</td>
+      </tr>
+      <tr>
+        <td>Cerebrovascular/stroke</td>
+        <td class="num">0.826</td>
+        <td class="num">0.835</td>
+        <td class="num">0.627</td>
+      </tr>
+      <tr>
+        <td>Walking difficulty</td>
+        <td class="num-muted">&mdash;</td>
+        <td class="num-muted">&mdash;</td>
+        <td class="num">0.636</td>
+      </tr>
+      <tr>
+        <td>ADL difficulty</td>
+        <td class="num-muted">&mdash;</td>
+        <td class="num-muted">&mdash;</td>
+        <td class="num">0.603</td>
+      </tr>
+      <tr>
+        <td>&Delta; vs Framingham (all-cause)</td>
+        <td class="num" style="color:var(--triad-s)">+0.021</td>
+        <td class="num" style="color:var(--triad-s)">+0.027</td>
+        <td class="num-muted">&mdash;</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    The model beats Framingham on all-cause, cerebrovascular, heart disease, and hypertension-contributing
+    mortality. It also identifies existing conditions from a blood panel alone: congestive heart failure
+    (C&nbsp;=&nbsp;0.777), prior myocardial infarction (0.788), prior stroke (0.793). The physiological
+    trajectory reads accumulated damage, not just future risk.
+  </p>
+
+  <h3>A mechanistic discovery</h3>
+  <div class="highlight-box">
+    Arterial compliance alone discriminates diabetes-contributing mortality at C&nbsp;=&nbsp;0.867 &mdash;
+    dramatically higher than the full 5-component composite. Diabetes kills primarily through vascular
+    stiffening (AGE crosslinking, glycocalyx degradation), and compliance is the direct ODE readout of
+    that mechanism. This is not a correlation finding &mdash; it is a mechanistic decomposition revealing
+    that a specific damage category is the dominant pathway for a specific cause of death.
+  </div>
+
+  <h3>Genetically validated</h3>
+  <p>
+    LD Score Regression shows the five subsystem traits are genetically independent &mdash; near-zero
+    pairwise genetic correlations between blood pressure, lipids, kidney function, diabetes susceptibility,
+    and heart rate. They are built by different genes but coupled by physiology. The ODE captures that
+    physiological coupling, and that coupling is where the discrimination lives.
+  </p>
+  <p>
+    If the traits were genetically correlated, a skeptic could argue the model is measuring shared genetic
+    risk through five windows. The near-zero correlations prove otherwise. Mendelian Randomization adds
+    causal directionality: kidney function causes blood pressure (p&nbsp;=&nbsp;8.4&times;10<sup>&minus;97</sup>),
+    not the reverse. The model captures physiological signal that genetics alone cannot see.
+  </p>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ MONITORING ═════════════════════════════════ -->
+<section id="monitoring">
+  <h2><span class="section-num">02</span>Wearable Monitoring: From Prediction to Observation</h2>
+  <p>
+    The Cardio model predicts physiological trajectories from a static blood panel. A wearable monitoring
+    layer checks those predictions against reality in real time. The discrepancy between prediction and
+    observation is the clinically informative signal. We validated this monitoring layer on five open-access
+    clinical datasets from PhysioNet:
+  </p>
+
+  <table class="layer-table">
+    <thead>
+      <tr>
+        <th>Population</th>
+        <th>N</th>
+        <th>Accuracy</th>
+        <th>Key Finding</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Heart failure (catheter ground truth)</td>
+        <td class="num">71</td>
+        <td class="num">95.3%</td>
+        <td>Wearable patch matches invasive hemodynamics</td>
+      </tr>
+      <tr>
+        <td>Neurodegenerative diseases</td>
+        <td class="num">64</td>
+        <td class="num">90.4%</td>
+        <td>Separates Parkinson&rsquo;s, Huntington&rsquo;s, ALS from gait</td>
+      </tr>
+      <tr>
+        <td>Frail elderly post-surgery</td>
+        <td class="num">76</td>
+        <td class="num">83.1%</td>
+        <td>Exercise HRV predicts frailty severity</td>
+      </tr>
+      <tr>
+        <td>Parkinson&rsquo;s (gait only)</td>
+        <td class="num">165</td>
+        <td class="num">69.8%</td>
+        <td>Less data &rarr; lower confidence (correct behavior)</td>
+      </tr>
+      <tr>
+        <td>Healthy aging (negative control)</td>
+        <td class="num">1,087</td>
+        <td class="num" style="color:var(--triad-s)">0 false alarms</td>
+        <td>System stays silent when nothing is wrong</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <p>
+    The system&rsquo;s confidence self-calibrates with input richness: a 2-point accuracy&ndash;confidence
+    gap with rich signals (ECG + seismocardiogram), widening to 12 points with thin signals (foot pressure
+    only), and silence with healthy subjects. This self-calibrating behavior emerges from the architecture,
+    not from training. Accurate when it can be, honest when it can&rsquo;t be, silent when it should be.
+  </p>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ HEALTH TRIAD ═══════════════════════════════ -->
+<section id="triad">
+  <h2><span class="section-num">03</span>The Health Triad</h2>
+  <p>
+    The user-facing abstraction is three coupled signals &mdash; Stability, Resilience, and Wear &mdash;
+    dynamically linked through an internal activation signal. This formulation captures something that
+    threshold-based monitoring cannot: a person can appear stable while compensatory effort rises,
+    reserve depletes, and cumulative strain accumulates underneath. The system explicitly models
+    compensation as meaningful physiological information.
+  </p>
+
+  <div class="triad-row">
+    <div class="triad-card stability">
+      <div class="label">Stability</div>
+      <p>How well the body is maintaining its current regulatory set points. Estimated from innovation sequences across the UKF filter bank &mdash; persistent deviations between predicted and observed states indicate regulatory strain before overt symptoms appear.</p>
+    </div>
+    <div class="triad-card resilience">
+      <div class="label">Resilience</div>
+      <p>The remaining capacity to absorb perturbation. Modeled via a nonlinear sigmoid that captures the cliff-edge fragility characteristic of vulnerable physiology: small additional stressors produce disproportionate decline when reserve is low.</p>
+    </div>
+    <div class="triad-card wear">
+      <div class="label">Wear</div>
+      <p>Cumulative burden from sustained high activation and incomplete recovery. Tracks the integral of activation over time, gated by recovery quality. Wear accumulates when stress is persistent and recovery windows are insufficient.</p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ ARCHITECTURE ════════════════════════════════ -->
+<section id="architecture">
+  <h2><span class="section-num">04</span>Architecture</h2>
+  <p>
+    The system separates into two complementary loops. <strong>PA</strong> (the fast loop) runs real-time
+    state estimation on edge hardware &mdash; Unscented Kalman Filter banks estimating latent physiological
+    states across coupled subsystems. <strong>MA</strong> (the slow loop) performs longitudinal adaptation
+    and causal reasoning, consuming shadow estimator outputs as read-only evidence bundles and generating
+    uncertainty-quantified hypotheses about physiological trajectory. MA is constitutionally non-authoritative
+    &mdash; it cannot override PA safety decisions.
+  </p>
+
+  <table class="layer-table">
+    <thead>
+      <tr><th>Layer</th><th>Latency</th><th>Function</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>L1 &mdash; MCU</td>
+        <td>&lt; 2 ms</td>
+        <td>Hard real-time deterministic safety. Threshold-based. Cannot be overridden by higher-level software.</td>
+      </tr>
+      <tr>
+        <td>L2 &mdash; Edge</td>
+        <td>&lt; 20 ms</td>
+        <td>UKF filter bank. Health Triad computation. Shadow estimator producing mechanism activation probabilities with calibrated self-trust. 3,000+ tests passing.</td>
+      </tr>
+      <tr>
+        <td>L3 &mdash; Cloud</td>
+        <td>Hours&ndash;months</td>
+        <td>Longitudinal modeling. Bounded prior updates. Ontology-grounded reasoning (BFO 2020 / SDAO). 12 disease disposition chains + 1 behavioral chain, all ensemble-reviewed.</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>Design invariants</h3>
+  <p>
+    The MCU safety loop is deterministic and independent. Raw biometric waveforms never leave the edge device.
+    When the model&rsquo;s uncertainty increases, the system&rsquo;s autonomy contracts &mdash; it does less, not more.
+    The safety policy is deontological, not consequentialist: certain actions are prohibited regardless of
+    expected utility. Every MA parameter update flows through a rate-limited safety interface with hard bounds.
+  </p>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ METHODOLOGY ═════════════════════════════════ -->
+<section id="methodology">
+  <h2><span class="section-num">05</span>Development Methodology</h2>
+  <p>
+    MuseEnGen is developed using a structured multi-model AI ensemble workflow &mdash; a novel engineering
+    methodology that treats frontier AI models as specialized co-architects with strict role boundaries.
+    The pattern has been validated across 35+ architectural decisions, 40+ governance artifacts, a 90+ file
+    specification suite, and the Cardio model&rsquo;s full external validation cycle.
+  </p>
+
+  <div class="ensemble-grid">
+    <div class="ensemble-card">
+      <div class="role-name">Architecture Synthesis</div>
+      <p>Cross-document consistency, specification synthesis, architectural reasoning, governance. Lead coordinator across all project domains.</p>
+    </div>
+    <div class="ensemble-card">
+      <div class="role-name">Mathematical Rigor</div>
+      <p>Equation auditing, formal specification, BFO ontology correctness, conditioning error detection. Multi-round review with the architect.</p>
+    </div>
+    <div class="ensemble-card">
+      <div class="role-name">Biological Validation</div>
+      <p>Physiological plausibility, parameter range verification, clinical scenario realism, scientific accuracy against current literature.</p>
+    </div>
+    <div class="ensemble-card">
+      <div class="role-name">Engineering Feasibility</div>
+      <p>Hardware implementability, compute budget verification, RF/wireless analysis, thermal envelope compliance, deployment realism.</p>
+    </div>
+  </div>
+
+  <p>
+    A human decision-maker retains full authority over all merges, invariants, and design choices. The Cardio
+    model and its external validation were completed in approximately 36 hours using this workflow. The
+    methodology is described in detail in the documents below and is offered as a transferable pattern
+    for any engineering team.
+  </p>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ CLAIMS ══════════════════════════════════════ -->
+<section id="claims">
+  <h2><span class="section-num">06</span>Claims Boundary</h2>
+  <p>
+    The project maintains an explicit and public claims boundary. This is not a legal disclaimer &mdash;
+    it is an architectural commitment enforced across all specifications, external communications,
+    and user-facing outputs.
+  </p>
+
+  <div class="claims-box">
+    <div class="claims-header">Public Claims Discipline</div>
+    <p>
+      MuseEnGen is designed to <span class="claims-does">monitor, estimate, suggest, and support</span>.
+      It does <span class="claims-does-not">not</span> claim to
+      <span class="claims-does-not">diagnose, treat, cure, or provide medical advice</span>.
+    </p>
+    <p style="margin-bottom:0.5rem;">
+      Every hypothesis output is accompanied by uncertainty quantification. The monitoring system is
+      constitutionally non-authoritative: it provides evidence to clinicians and users, never makes
+      autonomous clinical decisions. Validation status is disclosed honestly: what has been validated
+      is stated; what has not been validated is not hidden.
+    </p>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ DOCUMENTS ════════════════════════════════════ -->
+<section id="documents">
+  <h2><span class="section-num">07</span>Working Documents</h2>
+  <p>
+    These are project working documents &mdash; not peer-reviewed publications. They describe
+    the methodology, results, and safety reasoning as they currently stand. Preprints with full
+    equations, parameters, and reproducible code are in preparation.
+  </p>
+
+  <div class="pub-list">
+    <div class="pub-entry">
+      <div class="pub-title">The Cardio Model: A First-Principles ODE That Outperforms Framingham</div>
+      <div class="pub-meta">
+        Jeff Hall &middot; May 2026 &middot; Technical overview
+        <span class="pub-tag">Results</span>
+        <span class="pub-tag">In preparation</span>
+      </div>
+      <p class="pub-desc">
+        29-state coupled ODE, 5 physiological subsystems, validated on three independent cohorts (~40,000 adults),
+        multi-endpoint portfolio, genetic triangulation, compliance-diabetes mechanistic discovery. Preprint with full
+        equations, parameter provenance, and reproducible validation code forthcoming.
+      </p>
+    </div>
+
+    <div class="pub-entry">
+      <div class="pub-title">Genetic Triangulation of a First-Principles Cardiovascular ODE</div>
+      <div class="pub-meta">
+        Jeff Hall &middot; 2026 &middot; Methods paper
+        <span class="pub-tag">Results</span>
+        <span class="pub-tag">In preparation</span>
+      </div>
+      <p class="pub-desc">
+        LD Score Regression and Mendelian Randomization reveal that the ODE couples genetically
+        independent traits through physiological dynamics. The model captures signal that genetics
+        alone cannot see. Standalone methodological contribution.
+      </p>
+    </div>
+
+    <div class="pub-entry">
+      <div class="pub-title">Self-Calibrating Wearable Monitoring Across Clinical Populations</div>
+      <div class="pub-meta">
+        Jeff Hall &middot; 2026 &middot; Validation paper
+        <span class="pub-tag">Results</span>
+        <span class="pub-tag">In preparation</span>
+      </div>
+      <p class="pub-desc">
+        Five clinical datasets, 1,500+ subjects, five sensor modalities. The monitoring system&rsquo;s
+        confidence scales with signal richness and produces zero false alarms on 1,087 healthy controls.
+        Architecture-driven self-trust, not trained calibration.
+      </p>
+    </div>
+
+    <div class="pub-entry">
+      <div class="pub-title">Spec-Driven Development with Heterogeneous AI Ensembles</div>
+      <div class="pub-meta">
+        Jeff Hall &middot; March 2026 &middot; White paper
+        <span class="pub-tag">Methodology</span>
+      </div>
+      <p class="pub-desc">
+        A workflow pattern for engineering teams using multiple AI models as specialized co-architects.
+        Role-specific preambles, single-source-of-truth hierarchies, ADR governance, version currency gates.
+        Domain-independent &mdash; applicable to any specification-intensive engineering project.
+      </p>
+    </div>
+
+    <div class="pub-entry">
+      <div class="pub-title">Uncertainty Obligation Invariant Family and RSI Safety</div>
+      <div class="pub-meta">
+        Jeff Hall &middot; 2026 &middot; Draft
+        <span class="pub-tag">Safety</span>
+        <span class="pub-tag">Forthcoming</span>
+      </div>
+      <p class="pub-desc">
+        Formalizes an invariant family requiring that uncertainty quantification obligations
+        propagate through any recursive self-improvement pathway.
+      </p>
+    </div>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ NEWS ═══════════════════════════════════════ -->
+<section id="news">
+  <h2><span class="section-num">08</span>News</h2>
+
+  <div class="news-entry">
+    <div class="news-date">May 2026</div>
+    <div class="news-headline">Genetic validation confirms mechanism over correlation</div>
+    <p class="news-body">
+      LD Score Regression and Mendelian Randomization analysis demonstrates that the Cardio model&rsquo;s
+      five subsystem traits are genetically independent. The ODE couples traits built by different genes
+      through physiological dynamics &mdash; capturing signal that genetics alone cannot see. Causal
+      directionality confirmed: kidney function drives blood pressure, not the reverse.
+    </p>
+  </div>
+
+  <div class="news-entry">
+    <div class="news-date">May 2026</div>
+    <div class="news-headline">Third independent cohort validates on HRS (50+)</div>
+    <p class="news-body">
+      The Cardio model validates on the Health and Retirement Study with two imputed inputs, achieving
+      C&nbsp;=&nbsp;0.777 for all-cause mortality in adults 50+. Imputation sensitivity of 0.002 confirms
+      discrimination lives in the vascular/autonomic/plaque subsystems. New functional endpoints validated:
+      walking difficulty and ADL difficulty.
+    </p>
+  </div>
+
+  <div class="news-entry">
+    <div class="news-date">May 2026</div>
+    <div class="news-headline">Wearable monitoring pilots complete: five populations, zero false alarms</div>
+    <p class="news-body">
+      Five open-access clinical datasets validated: heart failure with catheter ground truth (95.3%),
+      neurodegenerative disease separation (90.4%), frailty severity prediction (83.1%),
+      Parkinson&rsquo;s gait discrimination (69.8%), and a 1,087-person healthy negative control
+      with zero false alarms and 12.8% mean activation.
+    </p>
+  </div>
+
+  <div class="news-entry">
+    <div class="news-date">May 2026</div>
+    <div class="news-headline">Multi-endpoint portfolio: not a CVD predictor, a general-purpose risk engine</div>
+    <p class="news-body">
+      The Cardio model beats Framingham on all-cause, cerebrovascular, heart disease, and
+      hypertension-contributing mortality. Cross-sectional discrimination of existing conditions:
+      CHF (0.777), prior MI (0.788), prior stroke (0.793). The compliance-diabetes finding
+      (C&nbsp;=&nbsp;0.867 for diabetes mortality from arterial stiffness alone) is a standalone
+      mechanistic discovery.
+    </p>
+  </div>
+
+  <div class="news-entry">
+    <div class="news-date">May 2026</div>
+    <div class="news-headline">FND-004 and FND-005 ratified: compiler and commit semantics</div>
+    <p class="news-body">
+      The context compilation mechanism (FND-004 v0.3) and commit semantics (FND-005 v0.2) are ratified.
+      The compiler produces context; commit semantics governs closure. Both reference the foundational
+      FND-002 v0.4. Test suite now exceeds 3,000 tests.
+    </p>
+  </div>
+
+  <div class="news-entry">
+    <div class="news-date">March 2026</div>
+    <div class="news-headline">Public site launched</div>
+    <p class="news-body">
+      First public documentation of the MuseEnGen architecture, development methodology,
+      and claims boundary.
+    </p>
+  </div>
+</section>
+
+<hr class="rule">
+
+<!-- ═══════════════════════════════════════ FOUNDER ═════════════════════════════════════ -->
+<section id="founder">
+  <h2><span class="section-num">09</span>About</h2>
+  <div class="founder-section">
+    <div>
+      <p>
+        MuseEnGen is founded and led by <strong>Jeff Hall</strong>. The project&rsquo;s mission is a
+        personalized MA&nbsp;&amp;&nbsp;PA instance, engineered to be inexpensive enough that nearly
+        anyone who wants one can have their own. Version&nbsp;1 earns the right to Version&nbsp;2.
+      </p>
+      <p class="credentials">
+        Electrical Engineering and Physics, University of Michigan. Co-founder, SENS Research Foundation.
+        30+ years across automotive systems, Department of Defense programs, and startup environments
+        including work with a Founders Fund&ndash;backed company.
+      </p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════════════════════════════════ FOOTER ══════════════════════════════════════ -->
+<footer id="contact">
+  <div class="left">
+    MuseEnGen &middot; 2026<br>
+    Ann Arbor, Michigan
+  </div>
+  <div class="right">
+    <a href="mailto:jeff@museengen.com">jeff@museengen.com</a>&ensp;&middot;&ensp;
+    <a href="https://github.com/museengen">GitHub</a>
+  </div>
+</footer>
+
+</body>
+</html>
